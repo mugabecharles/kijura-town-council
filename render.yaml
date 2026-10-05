@@ -1,10 +1,8 @@
 services:
   - type: web
     name: kijura-town-council
-    runtime: php
+    runtime: docker
     plan: free
-    buildCommand: ./scripts/render-build.sh
-    startCommand: cd /var/task && php artisan serve --host=0.0.0.0 --port=$PORT
     healthCheckPath: /up
     envVars:
       - key: APP_NAME
@@ -16,23 +14,18 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        fromService:
-          type: web
-          name: kijura-town-council
-          property: host
-      - key: LOG_CHANNEL
-        value: stderr
-      - key: LOG_LEVEL
-        value: error
-      - key: DB_CONNECTION
-        value: pgsql
-      - key: DATABASE_URL
-        sync: false          # paste your existing DB's Internal URL in the dashboard
+        sync: false          # set after first deploy to your .onrender.com URL
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+      - key: MYSQL_DATABASE
+        value: kijura_council
+      - key: MYSQL_USER
+        value: kijura
+      - key: MYSQL_PASSWORD
+        generateValue: true
       - key: SESSION_DRIVER
-        value: cookie
+        value: file
       - key: CACHE_STORE
         value: file
-      - key: QUEUE_CONNECTION
-        value: sync
-      - key: FILESYSTEM_DISK
-        value: public
+      - key: LOG_CHANNEL
+        value: stderr

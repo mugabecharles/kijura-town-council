@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,19 +14,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Use Bootstrap 5 pagination
+        // Bootstrap 5 pagination
         Paginator::useBootstrapFive();
 
-        // Trust all proxies on Render (load balancer terminates TLS)
-        if (app()->environment('production')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-            request()->setTrustedProxies(
-                ['*'],
-                \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR |
-                \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST |
-                \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT |
-                \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO
-            );
+        // Force HTTPS on Render (Render terminates TLS at the load balancer)
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
         }
 
         // Share site settings with all views

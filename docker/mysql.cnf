@@ -1,0 +1,32 @@
+[mysqld]
+# Allow running as root inside the container
+user                    = root
+
+# Network
+bind-address            = 127.0.0.1
+port                    = 3306
+
+# Character set
+character-set-server    = utf8mb4
+collation-server        = utf8mb4_unicode_ci
+
+# Storage
+datadir                 = /var/lib/mysql
+
+# Logging — send to stdout so Render can capture it
+general_log             = 0
+slow_query_log          = 0
+
+# InnoDB — tuned for 512 MB RAM (Render free tier)
+innodb_buffer_pool_size = 128M
+innodb_log_file_size    = 32M
+innodb_flush_method     = O_DIRECT
+
+# Disable strict mode issues
+sql_mode                = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+[client]
+default-character-set   = utf8mb4
+
+[mysql]
+default-character-set   = utf8mb4

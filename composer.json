@@ -7,7 +7,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "ext-pdo_pgsql": "*",
         "barryvdh/laravel-dompdf": "*",
         "intervention/image-laravel": "*",
         "laravel/framework": "^13.17",
