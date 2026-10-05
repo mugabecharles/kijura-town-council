@@ -1,0 +1,183 @@
+/* ============================================================
+   KIJURA TOWN COUNCIL — ADMIN CSS
+   ============================================================ */
+
+:root {
+    --adm-sidebar-w: 250px;
+    --adm-green:     #1a6b3a;
+    --adm-dark:      #1a1a2e;
+    --adm-topbar-h:  56px;
+}
+
+body.admin-body {
+    font-family: 'Inter', sans-serif;
+    background: #f1f3f5;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.admin-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--adm-sidebar-w);
+    background: var(--adm-dark);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1040;
+    transition: transform .3s;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.15) transparent;
+}
+
+.sidebar-brand {
+    padding: 1.2rem 1.2rem 1rem;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-user {
+    padding: .8rem 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.avatar-circle {
+    width: 34px; height: 34px;
+    background: var(--adm-green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: .9rem;
+    flex-shrink: 0;
+}
+
+.sidebar-nav { padding: .8rem 0 2rem; }
+
+.sidebar-section-label {
+    color: rgba(255,255,255,.4);
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: .4rem 1.2rem .2rem;
+    font-weight: 600;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: .55rem 1.2rem;
+    color: rgba(255,255,255,.75);
+    text-decoration: none;
+    font-size: .88rem;
+    transition: background .15s, color .15s;
+    gap: .65rem;
+}
+
+.sidebar-link i { font-size: 1rem; flex-shrink: 0; width: 20px; }
+.sidebar-link .badge { margin-left: auto; }
+.sidebar-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+.sidebar-link.active { background: var(--adm-green); color: #fff; }
+
+/* ── MAIN AREA ───────────────────────────────────────────── */
+.admin-main {
+    margin-left: var(--adm-sidebar-w);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left .3s;
+}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.admin-topbar {
+    height: var(--adm-topbar-h);
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.sidebar-toggle { color: #555; padding: .25rem .5rem; }
+
+/* ── CONTENT ─────────────────────────────────────────────── */
+.admin-content {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+/* ── STAT CARDS ──────────────────────────────────────────── */
+.stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,.05);
+    border-left: 4px solid var(--adm-green);
+    height: 100%;
+}
+.stat-icon {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1; color: var(--adm-dark); }
+.stat-label { font-size: .8rem; color: #888; margin-top: .1rem; }
+
+/* ── ADMIN CARD ──────────────────────────────────────────── */
+.admin-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,.05);
+    margin-bottom: 1.5rem;
+}
+.admin-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+    padding-bottom: .8rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+.admin-card-header h5, .admin-card-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--adm-dark);
+}
+
+/* ── TABLES ──────────────────────────────────────────────── */
+.table-admin { font-size: .875rem; }
+.table-admin thead th { background: #f8f9fa; font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #555; border-bottom: 2px solid #e9ecef; }
+.table-admin tbody tr:hover { background: #f8fff9; }
+.table-admin td { vertical-align: middle; }
+
+/* ── FORMS ───────────────────────────────────────────────── */
+.form-label { font-weight: 500; font-size: .875rem; color: #444; }
+.form-control:focus, .form-select:focus { border-color: var(--adm-green); box-shadow: 0 0 0 .2rem rgba(26,107,58,.15); }
+.form-section { background: #f8f9fa; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; }
+.form-section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 1rem; }
+
+/* ── SIDEBAR COLLAPSED ───────────────────────────────────── */
+body.sidebar-collapsed .admin-sidebar { transform: translateX(calc(-1 * var(--adm-sidebar-w))); }
+body.sidebar-collapsed .admin-main { margin-left: 0; }
+
+@media (max-width: 991px) {
+    .admin-sidebar { transform: translateX(calc(-1 * var(--adm-sidebar-w))); }
+    .admin-main { margin-left: 0; }
+    body.sidebar-open .admin-sidebar { transform: translateX(0); }
+}
+
+/* ── X-SMALL TEXT ────────────────────────────────────────── */
+.x-small { font-size: .7rem; }
