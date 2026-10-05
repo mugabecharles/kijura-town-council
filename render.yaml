@@ -27,9 +27,7 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DATABASE_URL
-        fromDatabase:
-          name: kijura-db
-          property: connectionString
+        sync: false          # paste your existing DB's Internal URL in the dashboard
       - key: SESSION_DRIVER
         value: cookie
       - key: CACHE_STORE
@@ -38,9 +36,3 @@ services:
         value: sync
       - key: FILESYSTEM_DISK
         value: public
-
-databases:
-  - name: kijura-db
-    databaseName: kijura_council
-    user: kijura
-    plan: free
