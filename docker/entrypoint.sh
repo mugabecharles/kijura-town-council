@@ -22,7 +22,6 @@ fi
 [ -n "${APP_URL}" ]  && sed -i "s|^APP_URL=.*|APP_URL=${APP_URL}|"   /var/www/html/.env
 
 # ── DB credentials ──────────────────────────────────────────
-DB_ROOT_PASS="${MYSQL_ROOT_PASSWORD:-KijuraRoot2026!}"
 DB_NAME="${MYSQL_DATABASE:-kijura_council}"
 DB_USER="${MYSQL_USER:-kijura}"
 DB_PASS="${MYSQL_PASSWORD:-KijuraDb2026!}"
@@ -37,22 +36,28 @@ sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|"   /var/www/html/.env
 # ── Initialise MariaDB data dir (first boot only) ────────────
 if [ ! -d /var/lib/mysql/mysql ]; then
     echo "==> [entrypoint] Initialising MariaDB data directory..."
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1
     echo "==> [entrypoint] MariaDB data directory initialised."
 fi
 
-# ── Fix MariaDB directory ownership ──────────────────────────
-chown -R mysql:mysql /var/lib/mysql /var/run/mysqld 2>/dev/null || \
-    (mkdir -p /var/run/mysqld && chown -R mysql:mysql /var/run/mysqld /var/lib/mysql)
+# ── Fix MariaDB socket directory ────────────────────────────
+mkdir -p /var/run/mysqld
+chown -R mysql:mysql /var/run/mysqld /var/lib/mysql
 
 # ── Start MariaDB temporarily for setup ──────────────────────
 echo "==> [entrypoint] Starting MariaDB for setup..."
-mysqld_safe --skip-networking=OFF --user=mysql &
+# Use mariadbd-safe (new name) or fall back to mysqld_safe
+if command -v mariadbd-safe &>/dev/null; then
+    mariadbd-safe --user=mysql --skip-networking &
+else
+    mysqld_safe --user=mysql --skip-networking &
+fi
 MYSQL_PID=$!
 
-# Wait until MariaDB is ready
+# Wait until MariaDB socket is ready
+SOCKET="/var/run/mysqld/mysqld.sock"
 for i in $(seq 1 40); do
-    if mysqladmin ping -h 127.0.0.1 -u root --silent 2>/dev/null; then
+    if [ -S "$SOCKET" ] && mysqladmin ping --socket="$SOCKET" --silent 2>/dev/null; then
         echo "==> [entrypoint] MariaDB is ready."
         break
     fi
@@ -60,18 +65,20 @@ for i in $(seq 1 40); do
     sleep 2
 done
 
-# ── Create database and application user ─────────────────────
+# ── Create database and user via socket (no password needed) ─
 echo "==> [entrypoint] Creating database and user..."
-mysql -u root -h 127.0.0.1 <<SQL
+mysql --socket="$SOCKET" -u root <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'%'
     IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost'
+    IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
-echo "==> [entrypoint] Database ready."
+echo "==> [entrypoint] Database and user created."
 
 # ── Laravel setup ────────────────────────────────────────────
 cd /var/www/html
@@ -80,7 +87,7 @@ echo "==> [entrypoint] Generating APP_KEY..."
 php artisan key:generate --force --no-interaction
 
 echo "==> [entrypoint] Running package discovery..."
-php artisan package:discover --ansi
+php artisan package:discover --ansi --no-interaction
 
 echo "==> [entrypoint] Clearing caches..."
 php artisan config:clear
@@ -105,10 +112,11 @@ php artisan view:cache
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# ── Stop setup MariaDB — Supervisor takes over ───────────────
-echo "==> [entrypoint] Handing off to Supervisor..."
-mysqladmin -u root -p"${DB_ROOT_PASS}" -h 127.0.0.1 shutdown 2>/dev/null || kill $MYSQL_PID
-sleep 2
+# ── Stop setup MariaDB cleanly via socket ───────────────────
+echo "==> [entrypoint] Stopping setup MariaDB..."
+mysqladmin --socket="$SOCKET" -u root shutdown 2>/dev/null || kill $MYSQL_PID 2>/dev/null || true
+sleep 3
 
 # ── Start Supervisor (MariaDB + Apache permanently) ──────────
+echo "==> [entrypoint] Starting Supervisor (MariaDB + Apache)..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

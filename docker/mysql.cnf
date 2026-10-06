@@ -1,27 +1,21 @@
 [mysqld]
-# Network
-bind-address            = 0.0.0.0
+user                    = mysql
+bind-address            = 127.0.0.1
 port                    = 3306
+socket                  = /var/run/mysqld/mysqld.sock
+pid-file                = /var/run/mysqld/mysqld.pid
+datadir                 = /var/lib/mysql
 
-# Character set
 character-set-server    = utf8mb4
 collation-server        = utf8mb4_unicode_ci
 
-# Storage
-datadir                 = /var/lib/mysql
-
-# Disable binary logging (not needed in single container)
 skip-log-bin
-
-# InnoDB — tuned for Render free tier (512 MB RAM)
 innodb_buffer_pool_size = 128M
-innodb_log_file_size    = 32M
-
-# Socket
-socket                  = /var/run/mysqld/mysqld.sock
 
 [client]
+socket                  = /var/run/mysqld/mysqld.sock
 default-character-set   = utf8mb4
 
 [mysql]
+socket                  = /var/run/mysqld/mysqld.sock
 default-character-set   = utf8mb4
