@@ -79,6 +79,9 @@ cd /var/www/html
 echo "==> [entrypoint] Generating APP_KEY..."
 php artisan key:generate --force --no-interaction
 
+echo "==> [entrypoint] Running package discovery..."
+php artisan package:discover --ansi
+
 echo "==> [entrypoint] Clearing caches..."
 php artisan config:clear
 php artisan route:clear

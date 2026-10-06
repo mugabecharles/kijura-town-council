@@ -1,17 +1,18 @@
 # ============================================================
 # Kijura Town Council — Single-container Docker image
 # PHP 8.3 + Apache + MariaDB (embedded, Debian Bookworm native)
-# MariaDB is the default-mysql-server on Debian — fully
-# compatible with all Laravel/MySQL migrations.
 # ============================================================
 FROM php:8.3-apache
 
-# ── System packages + MariaDB (native Debian package) ───────
+# ── Environment ──────────────────────────────────────────────
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_NO_INTERACTION=1 \
+    APP_ENV=production
+
+# ── System packages + MariaDB ────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        # MariaDB server — always available on Debian Bookworm
         mariadb-server \
         mariadb-client \
-        # PHP extension dependencies
         libpng-dev \
         libjpeg-dev \
         libwebp-dev \
@@ -20,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libicu-dev \
         libonig-dev \
         libxml2-dev \
-        # Utilities
         unzip \
         curl \
         git \
@@ -45,11 +45,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ── Composer ─────────────────────────────────────────────────
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # ── Apache ───────────────────────────────────────────────────
 RUN a2enmod rewrite headers
-
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # ── PHP config ───────────────────────────────────────────────
@@ -58,16 +56,28 @@ COPY docker/php.ini /usr/local/etc/php/conf.d/kijura.ini
 # ── MariaDB config ───────────────────────────────────────────
 COPY docker/mysql.cnf /etc/mysql/conf.d/kijura.cnf
 
-# ── Supervisor (manages MariaDB + Apache) ────────────────────
+# ── Supervisor ───────────────────────────────────────────────
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # ── Application code ─────────────────────────────────────────
 WORKDIR /var/www/html
 
+# Copy composer files first for layer caching
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies — no dev, no scripts (skips package:discover)
+# Scripts run at runtime in entrypoint once .env is in place
+RUN composer install \
+        --no-dev \
+        --optimize-autoloader \
+        --no-interaction \
+        --no-scripts
+
+# Copy the rest of the application
 COPY . .
 
-# ── PHP dependencies ─────────────────────────────────────────
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Run only the autoload dump (safe, no artisan needed)
+RUN composer dump-autoload --optimize --no-interaction
 
 # ── Directories + permissions ────────────────────────────────
 RUN mkdir -p \
