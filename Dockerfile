@@ -1,25 +1,30 @@
 # ============================================================
 # Kijura Town Council — Single-container Docker image
-# PHP 8.3 + Apache + MySQL 8.0 (embedded)
-# Runs on Render.com as a Docker web service
+# PHP 8.3 + Apache + MariaDB (embedded, Debian Bookworm native)
+# MariaDB is the default-mysql-server on Debian — fully
+# compatible with all Laravel/MySQL migrations.
 # ============================================================
 FROM php:8.3-apache
 
-# ── System packages + MySQL server ──────────────────────────
-RUN apt-get update && apt-get install -y \
-    mysql-server \
-    libpng-dev \
-    libjpeg-dev \
-    libwebp-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    libicu-dev \
-    libonig-dev \
-    libxml2-dev \
-    unzip \
-    curl \
-    git \
-    supervisor \
+# ── System packages + MariaDB (native Debian package) ───────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        # MariaDB server — always available on Debian Bookworm
+        mariadb-server \
+        mariadb-client \
+        # PHP extension dependencies
+        libpng-dev \
+        libjpeg-dev \
+        libwebp-dev \
+        libfreetype6-dev \
+        libzip-dev \
+        libicu-dev \
+        libonig-dev \
+        libxml2-dev \
+        # Utilities
+        unzip \
+        curl \
+        git \
+        supervisor \
     && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
@@ -41,7 +46,7 @@ RUN apt-get update && apt-get install -y \
 # ── Composer ─────────────────────────────────────────────────
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
-# ── Apache config ────────────────────────────────────────────
+# ── Apache ───────────────────────────────────────────────────
 RUN a2enmod rewrite headers
 
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
@@ -49,10 +54,10 @@ COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 # ── PHP config ───────────────────────────────────────────────
 COPY docker/php.ini /usr/local/etc/php/conf.d/kijura.ini
 
-# ── MySQL config — allow running as root in container ───────
+# ── MariaDB config ───────────────────────────────────────────
 COPY docker/mysql.cnf /etc/mysql/conf.d/kijura.cnf
 
-# ── Supervisor config — manages MySQL + Apache ───────────────
+# ── Supervisor (manages MariaDB + Apache) ────────────────────
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # ── Application code ─────────────────────────────────────────
@@ -60,10 +65,10 @@ WORKDIR /var/www/html
 
 COPY . .
 
-# ── Install PHP dependencies (no dev) ────────────────────────
+# ── PHP dependencies ─────────────────────────────────────────
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# ── Set up storage directories and permissions ───────────────
+# ── Directories + permissions ────────────────────────────────
 RUN mkdir -p \
         storage/app/public \
         storage/framework/sessions \
