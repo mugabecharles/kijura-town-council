@@ -5,7 +5,7 @@
 FROM php:8.3-apache
 
 # ── Cache bust — increment to force full rebuild ─────────────
-ARG CACHE_BUST=2
+ARG CACHE_BUST=3
 
 # ── Environment ──────────────────────────────────────────────
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
@@ -78,9 +78,6 @@ RUN composer install \
 
 # Copy the rest of the application
 COPY . .
-
-# Run only the autoload dump (safe, no artisan needed)
-RUN composer dump-autoload --optimize --no-interaction
 
 # ── Directories + permissions ────────────────────────────────
 RUN mkdir -p \
