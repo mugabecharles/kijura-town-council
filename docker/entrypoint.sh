@@ -9,8 +9,17 @@ echo "==> [entrypoint] Kijura Town Council container starting..."
 
 # ── Render injects PORT; Apache must listen on it ───────────
 APP_PORT="${PORT:-80}"
-sed -i "s/*:80/*:${APP_PORT}/g"  /etc/apache2/sites-available/000-default.conf
-echo "Listen ${APP_PORT}"        > /etc/apache2/ports.conf
+
+# Update Apache to listen on the correct port
+cat > /etc/apache2/ports.conf <<PORTS
+Listen ${APP_PORT}
+PORTS
+
+# Update the VirtualHost to use the correct port
+sed -i "s|<VirtualHost \*:80>|<VirtualHost *:${APP_PORT}>|g" \
+    /etc/apache2/sites-available/000-default.conf
+
+echo "==> [entrypoint] Apache configured on port ${APP_PORT}"
 
 # ── Copy .env template ───────────────────────────────────────
 if [ ! -f /var/www/html/.env ]; then
