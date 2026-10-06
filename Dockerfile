@@ -4,6 +4,9 @@
 # ============================================================
 FROM php:8.3-apache
 
+# ── Cache bust — increment to force full rebuild ─────────────
+ARG CACHE_BUST=2
+
 # ── Environment ──────────────────────────────────────────────
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     COMPOSER_NO_INTERACTION=1 \
@@ -65,13 +68,13 @@ WORKDIR /var/www/html
 # Copy composer files first for layer caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies — no dev, no scripts (skips package:discover)
-# Scripts run at runtime in entrypoint once .env is in place
+# Install PHP dependencies — no dev, no scripts at all during build
 RUN composer install \
         --no-dev \
         --optimize-autoloader \
         --no-interaction \
-        --no-scripts
+        --no-scripts \
+        --no-plugins
 
 # Copy the rest of the application
 COPY . .
